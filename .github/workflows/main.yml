@@ -20,6 +20,19 @@ jobs:
             const token = await core.getIDToken();
             core.setOutput("id_token", token);
 
+      - name: Debug OIDC token
+        run: |
+          echo "${{ steps.oidc.outputs.id_token }}" > token.jwt
+
+          IFS='.' read -r HEADER PAYLOAD SIGNATURE < token.jwt
+
+          echo "----- HEADER -----"
+          echo "$HEADER" | base64 -d | jq .
+
+          echo "----- PAYLOAD -----"
+          echo "$PAYLOAD" | base64 -d | jq .
+
+
       - name: Exchange OIDC token for access token
         id: token
         run: |
