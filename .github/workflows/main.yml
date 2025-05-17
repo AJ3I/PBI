@@ -17,7 +17,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const token = await core.getIDToken();
+            const token = await core.getIDToken("api://AzureADTokenExchange");
             core.setOutput("id_token", token);
 
       - name: Debug OIDC token
@@ -31,7 +31,6 @@ jobs:
 
           echo "----- PAYLOAD -----"
           echo "$PAYLOAD" | base64 -d | jq .
-
 
       - name: Exchange OIDC token for access token
         id: token
@@ -47,8 +46,13 @@ jobs:
 
           echo "RESPONSE=$RESPONSE"
           echo "access_token=$(echo $RESPONSE | jq -r '.access_token')" >> $GITHUB_OUTPUT
+          echo "Access token length: $(echo $RESPONSE | jq -r '.access_token' | wc -c)"
 
       - name: Call Power BI API
         run: |
-          curl -H "Authorization: Bearer ${{ steps.token.outputs.access_token }}" \
-               https://api.powerbi.com/v1.0/myorg/datasets
+          echo "Calling Power BI API..."
+          RESPONSE=$(curl -s -H "Authorization: Bearer ${{ steps.token.outputs.access_token }}" \
+               https://api.powerbi.com/v1.0/myorg/datasets)
+
+          echo "Power BI API response:"
+          echo "$RESPONSE" | jq .
