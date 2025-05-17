@@ -1,0 +1,33 @@
+name: OIDC to Power BI API
+
+on:
+push:
+branches:
+- main
+
+jobs:
+call-powerbi-api:
+runs-on: ubuntu-latest
+permissions:
+id-token: write # Needed to request OIDC token
+contents: read
+
+steps:
+- name: Request OIDC token and get access token
+id: get_token
+run: |
+echo "Requesting access token..."
+TOKEN=$(curl -X POST \
+-H "Content-Type: application/x-www-form-urlencoded" \
+-d "client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+-d "scope=https://analysis.windows.net/powerbi/api/.default" \
+-d "grant_type=client_credentials" \
+-d "client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer" \
+-d "client_assertion=$(curl -H "Authorization: Bearer ${{ steps.oidc_token.outputs.id_token }}" "https://token.actions.githubusercontent.com")" \
+"https://login.microsoftonline.com/${{ secrets.AZURE_TENANT_ID }}/oauth2/v2.0/token" | jq -r '.access_token')
+echo "::set-output name=access_token::$TOKEN"
+
+- name: Call Power BI API
+run: |
+curl -H "Authorization: Bearer ${{ steps.get_token.outputs.access_token }}" \
+https://api.powerbi.com/v1.0/myorg/datasets
