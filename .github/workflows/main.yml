@@ -52,7 +52,7 @@ jobs:
         run: |
           echo "Calling Power BI API..."
           RESPONSE=$(curl -s -H "Authorization: Bearer ${{ steps.token.outputs.access_token }}" \
-               https://api.powerbi.com/v1.0/myorg/datasets)
+               https://api.powerbi.com/v1.0/myorg/groups/0b7b8801-18ba-4858-a684-7c333c410bcb/datasets)
 
           echo "Power BI API response:"
           echo "$RESPONSE" | jq .
